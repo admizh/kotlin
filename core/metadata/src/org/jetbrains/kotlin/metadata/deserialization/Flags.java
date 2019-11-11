@@ -30,6 +30,7 @@ public class Flags {
     public static final BooleanFlagField IS_EXTERNAL_CLASS = FlagField.booleanAfter(IS_DATA);
     public static final BooleanFlagField IS_EXPECT_CLASS = FlagField.booleanAfter(IS_EXTERNAL_CLASS);
     public static final BooleanFlagField IS_INLINE_CLASS = FlagField.booleanAfter(IS_EXPECT_CLASS);
+    public static final BooleanFlagField IS_FUN_INTERFACE = FlagField.booleanAfter(IS_INLINE_CLASS);
 
     // Constructors
 
