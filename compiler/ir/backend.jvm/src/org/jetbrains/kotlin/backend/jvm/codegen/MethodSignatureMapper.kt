@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.ir.getJvmNameFromAnnotation
 import org.jetbrains.kotlin.backend.jvm.ir.hasJvmDefault
 import org.jetbrains.kotlin.backend.jvm.ir.propertyIfAccessor
+import org.jetbrains.kotlin.backend.jvm.lower.MultifileFacadeFileEntry
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
@@ -39,7 +40,6 @@ import org.jetbrains.kotlin.load.java.getOverriddenBuiltinReflectingJvmDescripto
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.load.kotlin.forceSingleValueParameterBoxing
 import org.jetbrains.kotlin.load.kotlin.getJvmModuleNameForDeserializedDescriptor
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodGenericSignature
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterKind
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
@@ -103,7 +103,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
     private fun mangleMemberNameIfRequired(name: String, function: IrFunction): String {
         val newName = JvmCodegenUtil.sanitizeNameIfNeeded(name, context.state.languageVersionSettings)
 
-        if (function.isTopLevel) {
+        if (function.isTopLevel || function.isMultifileTopLevel) {
             if (Visibilities.isPrivate(function.visibility) && newName != "<clinit>" &&
                 function.parentAsClass.attributeOwnerId in context.multifileFacadeForPart
             ) {
@@ -116,6 +116,12 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
             KotlinTypeMapper.InternalNameMapper.mangleInternalName(newName, getModuleName(function))
         } else newName
     }
+
+    private val IrDeclaration.isMultifileTopLevel: Boolean
+        get() {
+            val parentFile = (parent as? IrClass)?.parent as? IrFile
+            return parentFile != null && parentFile.fileEntry is MultifileFacadeFileEntry
+        }
 
     private fun getModuleName(function: IrFunction): String =
         // TODO: get rid of descriptors here
