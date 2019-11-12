@@ -252,7 +252,7 @@ private fun createKFunctionType(
 
     return createFunctionalType(
         parameterTypes, receiverType = receiverType,
-        rawReturnType = returnTypeRef.coneTypeSafe() ?: ConeKotlinErrorType("No type for return type of $function"),
+        rawReturnType = returnTypeRef.coneTypeSafe() ?: ConeKotlinErrorType("No 1type for return type of $function"),
         isKFunctionType = true
     )
 }
