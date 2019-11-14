@@ -38,7 +38,9 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.impl.FirResolvedTypeRefImpl
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
+import org.jetbrains.kotlin.resolve.calls.inference.NewConstraintSystem
 import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
+import kotlin.reflect.jvm.isAccessible
 
 class FirCallResolver(
     components: BodyResolveComponents,
@@ -348,7 +350,12 @@ class FirCallResolver(
             applicability < CandidateApplicability.SYNTHETIC_RESOLVED -> {
                 FirErrorNamedReferenceImpl(
                     source,
-                    FirInapplicableCandidateError(applicability, candidates.map { it.symbol })
+                    FirInapplicableCandidateError(applicability, candidates.map {
+                        FirInapplicableCandidateError.CandidateInfo(
+                            it.symbol,
+                            if (it.systemInitialized) it.system.diagnostics else emptyList()
+                        )
+                    })
                 )
             }
             candidates.size == 1 -> {

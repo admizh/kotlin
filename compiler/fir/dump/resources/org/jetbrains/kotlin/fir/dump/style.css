@@ -63,3 +63,30 @@ a.ref {
 .error-counter {
     margin-left: 10px;
 }
+
+.error.diagnostic-hover-container {
+    position: relative;
+    display: inline-block;
+}
+
+.error:hover .diagnostic-hover {
+    visibility: visible;
+    text-decoration: none;
+    opacity: 1;
+}
+
+.diagnostic-hover {
+    visibility: hidden;
+    background-color: #555;
+    color: #fff;
+
+    border-radius: 6px;
+    padding: 5px 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 0;
+
+    opacity: 0;
+    transition: opacity 0.3s;
+}
