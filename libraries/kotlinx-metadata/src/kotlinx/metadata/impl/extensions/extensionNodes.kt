@@ -15,7 +15,7 @@ interface KmClassExtension : KmClassExtensionVisitor, KmExtension<KmClassExtensi
 
 interface KmPackageExtension : KmPackageExtensionVisitor, KmExtension<KmPackageExtensionVisitor>
 
-interface KmPackageFragmentExtension : KmPackageFragmentExtensionVisitor, KmExtension<KmPackageFragmentExtensionVisitor>
+interface KmModuleFragmentExtension : KmModuleFragmentExtensionVisitor, KmExtension<KmModuleFragmentExtensionVisitor>
 
 interface KmFunctionExtension : KmFunctionExtensionVisitor, KmExtension<KmFunctionExtensionVisitor>
 

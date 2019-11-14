@@ -24,10 +24,10 @@ class ReverseSourceFileIndexWriteExtension : WriteContextExtension {
     }
 }
 
-class KlibPackageFragmentWriter(
+class KlibModuleFragmentWriter(
     stringTable: KlibMetadataStringTable,
     contextExtensions: List<WriteContextExtension> = emptyList()
-) : PackageFragmentWriter(stringTable, contextExtensions) {
+) : ModuleFragmentWriter(stringTable, contextExtensions) {
 
     fun write(): ProtoBuf.PackageFragment =
         t.build()

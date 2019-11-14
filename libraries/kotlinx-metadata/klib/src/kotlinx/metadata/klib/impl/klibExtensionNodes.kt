@@ -30,8 +30,8 @@ internal val KmTypeParameter.klibExtensions: KlibTypeParameterExtension
 internal val KmPackage.klibExtensions: KlibPackageExtension
     get() = visitExtensions(KlibPackageExtensionVisitor.TYPE) as KlibPackageExtension
 
-internal val KmPackageFragment.klibExtensions: KlibPackageFragmentExtension
-    get() = visitExtensions(KlibPackageFragmentExtensionVisitor.TYPE) as KlibPackageFragmentExtension
+internal val KmModuleFragment.klibExtensions: KlibModuleFragmentExtension
+    get() = visitExtensions(KlibModuleFragmentExtensionVisitor.TYPE) as KlibModuleFragmentExtension
 
 internal class KlibFunctionExtension : KlibFunctionExtensionVisitor(), KmFunctionExtension {
 
@@ -197,15 +197,15 @@ internal class KlibPackageExtension : KlibPackageExtensionVisitor(), KmPackageEx
     }
 }
 
-internal class KlibPackageFragmentExtension : KlibPackageFragmentExtensionVisitor(), KmPackageFragmentExtension {
+internal class KlibModuleFragmentExtension : KlibModuleFragmentExtensionVisitor(), KmModuleFragmentExtension {
 
-    val packageFragmentFiles: MutableList<KlibSourceFile> = ArrayList()
+    val moduleFragmentFiles: MutableList<KlibSourceFile> = ArrayList()
     var isEmpty: Boolean? = null
     var fqName: String? = null
     val className: MutableList<ClassName> = ArrayList()
 
     override fun visitFile(file: KlibSourceFile) {
-        packageFragmentFiles += file
+        moduleFragmentFiles += file
     }
 
     override fun visitIsEmpty(isEmpty: Boolean) {
@@ -220,9 +220,9 @@ internal class KlibPackageFragmentExtension : KlibPackageFragmentExtensionVisito
         this.className += className
     }
 
-    override fun accept(visitor: KmPackageFragmentExtensionVisitor) {
-        require(visitor is KlibPackageFragmentExtensionVisitor)
-        packageFragmentFiles.forEach(visitor::visitFile)
+    override fun accept(visitor: KmModuleFragmentExtensionVisitor) {
+        require(visitor is KlibModuleFragmentExtensionVisitor)
+        moduleFragmentFiles.forEach(visitor::visitFile)
         isEmpty?.let(visitor::visitIsEmpty)
         fqName?.let(visitor::visitFqName)
         className.forEach(visitor::visitClassName)

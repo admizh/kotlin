@@ -48,8 +48,8 @@ internal class KlibMetadataExtensions : MetadataExtensions {
         }
     }
 
-    override fun readPackageFragmentExtensions(v: KmPackageFragmentVisitor, proto: ProtoBuf.PackageFragment, c: ReadContext) {
-        val extension = v.visitExtensions(KlibPackageFragmentExtensionVisitor.TYPE) as? KlibPackageFragmentExtensionVisitor ?: return
+    override fun readModuleFragmentExtensions(v: KmModuleFragmentVisitor, proto: ProtoBuf.PackageFragment, c: ReadContext) {
+        val extension = v.visitExtensions(KlibModuleFragmentExtensionVisitor.TYPE) as? KlibModuleFragmentExtensionVisitor ?: return
 
         proto.getExtension(KlibMetadataProtoBuf.packageFragmentFiles)
             .map { c.getSourceFile(it) }
@@ -165,13 +165,13 @@ internal class KlibMetadataExtensions : MetadataExtensions {
         }
     }
 
-    override fun writePackageFragmentExtensions(
+    override fun writeModuleFragmentExtensions(
         type: KmExtensionType,
         proto: ProtoBuf.PackageFragment.Builder,
         c: WriteContext
-    ): KmPackageFragmentExtensionVisitor? {
-        if (type != KlibPackageFragmentExtensionVisitor.TYPE) return null
-        return object : KlibPackageFragmentExtensionVisitor() {
+    ): KmModuleFragmentExtensionVisitor? {
+        if (type != KlibModuleFragmentExtensionVisitor.TYPE) return null
+        return object : KlibModuleFragmentExtensionVisitor() {
             override fun visitFile(file: KlibSourceFile) {
                 val fileIdx = c.getIndexOf(file)
                 proto.addExtension(KlibMetadataProtoBuf.packageFragmentFiles, fileIdx)
@@ -335,8 +335,8 @@ internal class KlibMetadataExtensions : MetadataExtensions {
     override fun createPackageExtension(): KmPackageExtension =
         KlibPackageExtension()
 
-    override fun createPackageFragmentExtensions(): KmPackageFragmentExtension =
-        KlibPackageFragmentExtension()
+    override fun createModuleFragmentExtensions(): KmModuleFragmentExtension =
+        KlibModuleFragmentExtension()
 
     override fun createFunctionExtension(): KmFunctionExtension =
         KlibFunctionExtension()

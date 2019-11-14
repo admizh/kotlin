@@ -125,7 +125,7 @@ fun ProtoBuf.Package.accept(
 }
 
 fun ProtoBuf.PackageFragment.accept(
-    v: KmPackageFragmentVisitor,
+    v: KmModuleFragmentVisitor,
     strings: NameResolver,
     contextExtensions: List<ReadContextExtension> = emptyList()
 ) {
@@ -143,7 +143,7 @@ fun ProtoBuf.PackageFragment.accept(
     }
 
     for (extension in c.extensions) {
-        extension.readPackageFragmentExtensions(v, this, c)
+        extension.readModuleFragmentExtensions(v, this, c)
     }
 
     v.visitEnd()

@@ -113,7 +113,7 @@ abstract class KlibPackageExtensionVisitor : KmPackageExtensionVisitor {
     }
 }
 
-abstract class KlibPackageFragmentExtensionVisitor : KmPackageFragmentExtensionVisitor {
+abstract class KlibModuleFragmentExtensionVisitor : KmModuleFragmentExtensionVisitor {
 
     abstract fun visitFile(file: KlibSourceFile)
 
@@ -127,6 +127,6 @@ abstract class KlibPackageFragmentExtensionVisitor : KmPackageFragmentExtensionV
         get() = TYPE
 
     companion object {
-        val TYPE = KmExtensionType(KlibPackageFragmentExtensionVisitor::class)
+        val TYPE = KmExtensionType(KlibModuleFragmentExtensionVisitor::class)
     }
 }

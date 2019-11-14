@@ -218,38 +218,38 @@ class KmPackage : KmPackageVisitor(), KmDeclarationContainer {
 }
 
 /**
- * Represents a Kotlin package fragment. This is used to represent metadata of a part of a module on platforms other than JVM.
+ * Represents a Kotlin module fragment. This is used to represent metadata of a part of a module on platforms other than JVM.
  */
-class KmPackageFragment : KmPackageFragmentVisitor() {
+class KmModuleFragment : KmModuleFragmentVisitor() {
 
     /**
-     * Top-level functions, type aliases and properties in the package fragment.
+     * Top-level functions, type aliases and properties in the module fragment.
      */
     var pkg: KmPackage? = null
 
     /**
-     * Classes in the package fragment.
+     * Classes in the module fragment.
      */
     val classes: MutableList<KmClass> = ArrayList()
 
-    private val extensions: List<KmPackageFragmentExtension> =
-        MetadataExtensions.INSTANCES.map(MetadataExtensions::createPackageFragmentExtensions)
+    private val extensions: List<KmModuleFragmentExtension> =
+        MetadataExtensions.INSTANCES.map(MetadataExtensions::createModuleFragmentExtensions)
 
     override fun visitPackage(): KmPackageVisitor? =
         KmPackage().also { pkg = it }
 
-    override fun visitExtensions(type: KmExtensionType): KmPackageFragmentExtensionVisitor? =
+    override fun visitExtensions(type: KmExtensionType): KmModuleFragmentExtensionVisitor? =
         extensions.singleOfType(type)
 
     override fun visitClass(): KmClassVisitor? =
         KmClass().addTo(classes)
 
     /**
-     * Populates the given visitor with data in this package fragment.
+     * Populates the given visitor with data in this module fragment.
      *
-     * @param visitor the visitor which will visit data in the package fragment.
+     * @param visitor the visitor which will visit data in the module fragment.
      */
-    fun accept(visitor: KmPackageFragmentVisitor) {
+    fun accept(visitor: KmModuleFragmentVisitor) {
         pkg?.let { visitor.visitPackage()?.let(it::accept) }
         classes.forEach { visitor.visitClass()?.let(it::accept) }
         extensions.forEach { visitor.visitExtensions(it.type)?.let(it::accept) }

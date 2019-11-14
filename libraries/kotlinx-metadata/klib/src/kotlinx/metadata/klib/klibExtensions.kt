@@ -83,23 +83,23 @@ var KmPackage.fqName: String?
         klibExtensions.fqName = value
     }
 
-var KmPackageFragment.fqName: String?
+var KmModuleFragment.fqName: String?
     get() = klibExtensions.fqName
     set(value) {
         klibExtensions.fqName = value
     }
 
-var KmPackageFragment.isEmpty: Boolean?
+var KmModuleFragment.isEmpty: Boolean?
     get() = klibExtensions.isEmpty
     set(value) {
         klibExtensions.isEmpty = value
     }
 
-val KmPackageFragment.className: MutableList<ClassName>?
+val KmModuleFragment.className: MutableList<ClassName>?
     get() = klibExtensions.className
 
-val KmPackageFragment.packageFragmentFiles: MutableList<KlibSourceFile>?
-    get() = klibExtensions.packageFragmentFiles
+val KmModuleFragment.moduleFragmentFiles: MutableList<KlibSourceFile>?
+    get() = klibExtensions.moduleFragmentFiles
 
 val KmTypeParameter.annotations: MutableList<KmAnnotation>
     get() = klibExtensions.annotations

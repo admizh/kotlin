@@ -487,28 +487,28 @@ open class PackageWriter(stringTable: StringTable, contextExtensions: List<Write
     }
 }
 
-open class PackageFragmentWriter(stringTable: StringTable, contextExtensions: List<WriteContextExtension> = emptyList()) :
-    KmPackageFragmentVisitor() {
+open class ModuleFragmentWriter(stringTable: StringTable, contextExtensions: List<WriteContextExtension> = emptyList()) :
+    KmModuleFragmentVisitor() {
     protected val t = ProtoBuf.PackageFragment.newBuilder()
     protected val c: WriteContext = WriteContext(stringTable, contextExtensions)
 
     override fun visitPackage(): KmPackageVisitor? = object : PackageWriter(c.strings, c.contextExtensions) {
         override fun visitEnd() {
             super.visitEnd()
-            this@PackageFragmentWriter.t.setPackage(t)
+            this@ModuleFragmentWriter.t.setPackage(t)
         }
     }
 
     override fun visitClass(): KmClassVisitor? = object : ClassWriter(c.strings, c.contextExtensions) {
         override fun visitEnd() {
             super.visitEnd()
-            this@PackageFragmentWriter.t.addClass_(t)
+            this@ModuleFragmentWriter.t.addClass_(t)
         }
     }
 
-    override fun visitExtensions(type: KmExtensionType): KmPackageFragmentExtensionVisitor? =
+    override fun visitExtensions(type: KmExtensionType): KmModuleFragmentExtensionVisitor? =
         applySingleExtension(type) {
-            writePackageFragmentExtensions(type, t, c)
+            writeModuleFragmentExtensions(type, t, c)
         }
 }
 
