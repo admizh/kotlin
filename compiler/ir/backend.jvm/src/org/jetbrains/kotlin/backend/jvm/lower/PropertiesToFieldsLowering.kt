@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlock
+import org.jetbrains.kotlin.backend.common.lower.parents
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -20,6 +21,8 @@ import org.jetbrains.kotlin.ir.expressions.IrFieldAccessExpression
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isObject
+import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
@@ -86,7 +89,7 @@ class PropertiesToFieldsLowering(val context: CommonBackendContext) : IrElementT
             expression.origin,
             expression.superQualifierSymbol
         )
-        return buildSubstitution(backingField.isStatic, setExpr, receiver)
+        return buildSubstitution(backingField.isStaticFieldWorkaround, setExpr, receiver)
     }
 
     private fun substituteGetter(irProperty: IrProperty, expression: IrCall): IrExpression {
@@ -101,8 +104,12 @@ class PropertiesToFieldsLowering(val context: CommonBackendContext) : IrElementT
             expression.origin,
             expression.superQualifierSymbol
         )
-        return buildSubstitution(backingField.isStatic, getExpr, receiver)
+        return buildSubstitution(backingField.isStaticFieldWorkaround, getExpr, receiver)
     }
+
+    // TODO
+    private val IrField.isStaticFieldWorkaround: Boolean
+        get() = isStatic || (hasAnnotation(JVM_FIELD_ANNOTATION_FQ_NAME) && parentAsClass.isObject)
 
     private fun buildSubstitution(needBlock: Boolean, setOrGetExpr: IrFieldAccessExpression, receiver: IrExpression?): IrExpression {
         if (receiver != null && needBlock) {

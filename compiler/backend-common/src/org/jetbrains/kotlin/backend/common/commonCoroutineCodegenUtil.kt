@@ -8,7 +8,9 @@ package org.jetbrains.kotlin.backend.common
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.coroutinesIntrinsicsPackageFqName
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.isTopLevelInPackage
 import org.jetbrains.kotlin.name.Name
 
@@ -22,4 +24,9 @@ fun FunctionDescriptor.isBuiltInSuspendCoroutineUninterceptedOrReturn(languageVe
     isTopLevelInPackage(
         "suspendCoroutineUninterceptedOrReturn",
         languageVersionSettings.coroutinesIntrinsicsPackageFqName().asString()
-    )
+    ) || (
+            // TODO
+            name.asString() == "suspendCoroutineUninterceptedOrReturn" &&
+                    ((containingDeclaration as? ClassDescriptor)?.containingDeclaration as? PackageFragmentDescriptor)?.fqName ==
+                    languageVersionSettings.coroutinesIntrinsicsPackageFqName()
+            )
