@@ -117,8 +117,15 @@ private fun coneFlexibleOrSimpleType(
     upperBound: ConeLookupTagBasedType
 ): ConeKotlinType {
     if (AbstractStrictEqualityTypeChecker.strictEqualTypes(session.typeContext, lowerBound, upperBound)) {
-        if (lowerBound.lookupTag is ConeTypeParameterLookupTag && !lowerBound.isMarkedNullable) {
-            return ConeDefinitelyNotNullType.create(lowerBound)
+        val lookupTag = lowerBound.lookupTag
+        if (lookupTag is ConeTypeParameterLookupTag && !lowerBound.isMarkedNullable) {
+            if (lookupTag.typeParameterSymbol.fir.bounds.any {
+                    val type = (it as FirResolvedTypeRef).type
+                    type is ConeTypeParameterType || type.isNullable
+                }
+            ) {
+                return ConeDefinitelyNotNullType.create(lowerBound)
+            }
         }
         return lowerBound
     }
