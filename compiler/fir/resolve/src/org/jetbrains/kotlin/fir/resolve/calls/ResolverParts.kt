@@ -45,14 +45,10 @@ internal object CheckExplicitReceiverConsistency : ResolutionStage() {
                     return sink.yieldApplicability(CandidateApplicability.WRONG_RECEIVER)
             }
             EXTENSION_RECEIVER, DISPATCH_RECEIVER -> {
-                if (explicitReceiver == null) {
-                    return sink.yieldApplicability(CandidateApplicability.WRONG_RECEIVER)
-                }
+                if (explicitReceiver == null) return sink.yieldApplicability(CandidateApplicability.WRONG_RECEIVER)
             }
             BOTH_RECEIVERS -> {
-                if (explicitReceiver == null) {
-                    return sink.yieldApplicability(CandidateApplicability.WRONG_RECEIVER)
-                }
+                if (explicitReceiver == null) return sink.yieldApplicability(CandidateApplicability.WRONG_RECEIVER)
                 // Here we should also check additional invoke receiver
             }
         }
