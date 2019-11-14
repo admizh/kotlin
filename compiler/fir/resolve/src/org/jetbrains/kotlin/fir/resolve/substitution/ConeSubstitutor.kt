@@ -146,15 +146,20 @@ abstract class AbstractConeSubstitutor : ConeSubstitutor() {
 }
 
 
-fun substitutorByMap(substitution: Map<FirTypeParameterSymbol, ConeKotlinType>): ConeSubstitutor {
+fun substitutorByMap(substitution: Map<FirTypeParameterSymbol, ConeKotlinTypeProjection>): ConeSubstitutor {
     if (substitution.isEmpty()) return ConeSubstitutor.Empty
     return ConeSubstitutorByMap(substitution)
 }
 
-class ConeSubstitutorByMap(val substitution: Map<FirTypeParameterSymbol, ConeKotlinType>) : AbstractConeSubstitutor() {
+class ConeSubstitutorByMap(val substitution: Map<FirTypeParameterSymbol, ConeKotlinTypeProjection>) : AbstractConeSubstitutor() {
 
     override fun substituteType(type: ConeKotlinType): ConeKotlinType? {
         if (type !is ConeTypeParameterType) return null
-        return makeNullableIfNeed(type.isMarkedNullable, substitution[type.lookupTag.symbol])
+        val substitutionProjection = substitution[type.lookupTag.symbol] ?: return null
+        if (substitutionProjection is ConeTypedProjection) {
+            return makeNullableIfNeed(type.isMarkedNullable, substitutionProjection.type)
+        }
+        // * projection: take first bound
+        return (type.lookupTag.typeParameterSymbol.fir.bounds.firstOrNull() as? FirResolvedTypeRef)?.type
     }
 }
