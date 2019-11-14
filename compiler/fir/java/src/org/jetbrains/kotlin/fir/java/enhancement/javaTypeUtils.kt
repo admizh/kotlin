@@ -118,7 +118,7 @@ private fun coneFlexibleOrSimpleType(
 ): ConeKotlinType {
     if (AbstractStrictEqualityTypeChecker.strictEqualTypes(session.typeContext, lowerBound, upperBound)) {
         if (lowerBound.lookupTag is ConeTypeParameterLookupTag && !lowerBound.isMarkedNullable) {
-            return ConeDefinitelyNotNullType(lowerBound)
+            return ConeDefinitelyNotNullType.create(lowerBound)
         }
         return lowerBound
     }
