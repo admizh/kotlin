@@ -41,12 +41,12 @@ class Fix(e: DerivedElement)
 
 fun create(d: Diagnostic<DerivedElement>) {
     val element = d.element
-    <!INAPPLICABLE_CANDIDATE!>Fix<!>(element)
+    Fix(element)
 }
 
 fun <DE : DerivedElement> createGeneric(d: Diagnostic<DE>) {
     val element = d.element
-    <!INAPPLICABLE_CANDIDATE!>Fix<!>(element)
+    Fix(element)
 }
 
 private val DERIVED_FACTORY = DiagnosticFactory0<DerivedElement>()
