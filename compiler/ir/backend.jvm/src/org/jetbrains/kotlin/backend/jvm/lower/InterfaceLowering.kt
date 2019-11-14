@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.backend.common.ir.passTypeArgumentsFrom
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
+import org.jetbrains.kotlin.backend.jvm.codegen.isJvmInterface
 import org.jetbrains.kotlin.backend.jvm.ir.hasJvmDefault
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -41,11 +43,28 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
     private val removedFunctions = hashMapOf<IrFunctionSymbol, IrFunctionSymbol>()
 
     override fun lower(irClass: IrClass) {
-        if (!irClass.isInterface) return
+        if (!irClass.isJvmInterface) return
 
         val defaultImplsIrClass = context.declarationFactory.getDefaultImplsClass(irClass)
-        val members = defaultImplsIrClass.declarations
+        when (irClass.kind) {
+            ClassKind.INTERFACE -> handleInterface(irClass, defaultImplsIrClass)
+            ClassKind.ANNOTATION_CLASS -> handleAnnotationClass(irClass, defaultImplsIrClass)
+            else -> return
+        }
 
+        irClass.declarations.removeAll {
+            it is IrFunction && removedFunctions.containsKey(it.symbol)
+        }
+
+        if (defaultImplsIrClass.declarations.isNotEmpty()) {
+            irClass.declarations.add(defaultImplsIrClass)
+        }
+
+        // Update IrElements (e.g., IrCalls) to point to the new functions.
+        irClass.transformChildrenVoid(this)
+    }
+
+    private fun handleInterface(irClass: IrClass, defaultImplsIrClass: IrClass) {
         // There are 6 cases for functions on interfaces:
         loop@ for (function in irClass.functions) {
             when {
@@ -89,7 +108,7 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
                 Visibilities.isPrivate(function.visibility)
                         || (function.origin == IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER && !function.hasJvmDefault())
                         || function.origin == JvmLoweredDeclarationOrigin.SYNTHETIC_METHOD_FOR_PROPERTY_ANNOTATIONS -> {
-                    val defaultImpl = createDefaultImpl(function, members)
+                    val defaultImpl = createDefaultImpl(function, defaultImplsIrClass)
                     removedFunctions[function.symbol] = defaultImpl.symbol
                 }
 
@@ -98,7 +117,7 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
                  *    an abstract stub is left.
                  */
                 !function.hasJvmDefault() -> {
-                    createDefaultImpl(function, members)
+                    createDefaultImpl(function, defaultImplsIrClass)
                     function.body = null
                     //TODO reset modality to abstract
                 }
@@ -107,16 +126,12 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
                  * 5) _With_ @JvmDefault, we move and bridge if in compatibility mode, ...
                  */
                 context.state.jvmDefaultMode.isCompatibility -> {
-                    val defaultImpl = createDefaultImpl(function, members)
+                    val defaultImpl = createDefaultImpl(function, defaultImplsIrClass)
                     function.body = IrExpressionBodyImpl(createDelegatingCall(defaultImpl, function))
                 }
 
                 // 6) ... otherwise we simply leave the default function implementation on the interface.
             }
-        }
-
-        irClass.declarations.removeAll {
-            it is IrFunction && removedFunctions.containsKey(it.symbol)
         }
 
         // Move metadata for local delegated properties from the interface to DefaultImpls, since this is where kotlin-reflect looks for it.
@@ -135,17 +150,24 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
             delegatedPropertyArray.parent = defaultImplsIrClass
             delegatedPropertyArray.initializer?.patchDeclarationParents(defaultImplsIrClass)
         }
-
-        if (defaultImplsIrClass.declarations.isNotEmpty()) irClass.declarations.add(defaultImplsIrClass)
-        // Update IrElements (e.g., IrCalls) to point to the new functions.
-        irClass.transformChildrenVoid(this)
     }
 
-    private fun createDefaultImpl(function: IrSimpleFunction, members: MutableList<IrDeclaration>): IrSimpleFunction =
+    private fun handleAnnotationClass(irClass: IrClass, defaultImplsIrClass: IrClass) {
+        // We produce $DefaultImpls for annotation classes only to move $annotations methods (for property annotations) there.
+        val annotationsMethods =
+            irClass.functions.filter { it.origin == JvmLoweredDeclarationOrigin.SYNTHETIC_METHOD_FOR_PROPERTY_ANNOTATIONS }
+        if (annotationsMethods.none()) return
+
+        for (function in annotationsMethods) {
+            removedFunctions[function.symbol] = createDefaultImpl(function, defaultImplsIrClass).symbol
+        }
+    }
+
+    private fun createDefaultImpl(function: IrSimpleFunction, defaultImplsIrClass: IrClass): IrSimpleFunction =
         context.declarationFactory.getDefaultImplsFunction(function).also {
             it.body = function.body?.patchDeclarationParents(it)
             copyBodyToStatic(function, it)
-            members.add(it)
+            defaultImplsIrClass.declarations.add(it)
         }
 
     private fun createDelegatingCall(defaultImpls: IrFunction, interfaceMethod: IrFunction): IrCall {
