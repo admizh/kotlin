@@ -7835,6 +7835,11 @@ public class DiagnosticsUsingJavacTestGenerated extends AbstractDiagnosticsUsing
             public void testSeveralConversionsForFunInterface() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/funInterface/severalConversionsForFunInterface.kt");
             }
+
+            @TestMetadata("suspendFunInterfaceConversion.kt")
+            public void testSuspendFunInterfaceConversion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/funInterface/suspendFunInterfaceConversion.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/diagnostics/tests/functionAsExpression")
