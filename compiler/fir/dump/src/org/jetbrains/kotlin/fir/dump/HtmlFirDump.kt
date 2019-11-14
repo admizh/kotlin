@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.diagnostics.FirAmbiguityError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.FirInapplicableCandidateError
 import org.jetbrains.kotlin.fir.symbols.*
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -1087,6 +1088,14 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
                         }
                         br
                     }
+                }
+            }
+            is FirAmbiguityError -> {
+                +"Ambiguity: "
+                br
+                for (candidate in diagnostic.candidates) {
+                    describeVerbose(candidate)
+                    br
                 }
             }
             else -> +diagnostic.reason
