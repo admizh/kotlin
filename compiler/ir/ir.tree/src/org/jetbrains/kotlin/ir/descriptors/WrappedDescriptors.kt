@@ -105,6 +105,8 @@ abstract class WrappedDeclarationDescriptor<T : IrDeclaration>(annotations: Anno
     fun bind(declaration: T) {
         owner = declaration
     }
+
+    fun isBound(): Boolean = _owner != null
 }
 
 abstract class WrappedCallableDescriptor<T : IrDeclaration>(

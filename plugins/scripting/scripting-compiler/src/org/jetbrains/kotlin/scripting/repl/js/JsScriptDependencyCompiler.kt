@@ -50,13 +50,9 @@ class JsScriptDependencyCompiler(
 
         val moduleFragment = IrModuleFragmentImpl(moduleDescriptor, irBuiltIns)
         val irDependencies = dependencies.map { jsLinker.deserializeFullModule(it) }
+        val irProviders = generateTypicalIrProviderList(moduleDescriptor, irBuiltIns, symbolTable, deserializer = jsLinker)
 
-        ExternalDependenciesGenerator(
-            moduleDescriptor = moduleDescriptor,
-            symbolTable = symbolTable,
-            irBuiltIns = irBuiltIns,
-            deserializer = jsLinker
-        ).generateUnboundSymbolsAsDependencies()
+        ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
         moduleFragment.patchDeclarationParents()
 
         val backendContext = JsIrBackendContext(
@@ -69,12 +65,7 @@ class JsScriptDependencyCompiler(
             true
         )
 
-        ExternalDependenciesGenerator(
-            moduleDescriptor = moduleDescriptor,
-            symbolTable = symbolTable,
-            irBuiltIns = irBuiltIns,
-            deserializer = jsLinker
-        ).generateUnboundSymbolsAsDependencies()
+        ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
         moduleFragment.patchDeclarationParents()
 
         moduleFragment.files += irDependencies.flatMap { it.files }

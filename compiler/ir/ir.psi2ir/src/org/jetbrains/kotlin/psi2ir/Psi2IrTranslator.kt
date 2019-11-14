@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.util.IrDeserializer
-import org.jetbrains.kotlin.ir.util.IrProvider
-import org.jetbrains.kotlin.ir.util.SymbolTable
-import org.jetbrains.kotlin.ir.util.patchDeclarationParents
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.generators.AnnotationGenerator
@@ -39,7 +36,8 @@ import org.jetbrains.kotlin.utils.SmartList
 class Psi2IrTranslator(
     val languageVersionSettings: LanguageVersionSettings,
     val configuration: Psi2IrConfiguration = Psi2IrConfiguration(),
-    val facadeClassGenerator: (DeserializedContainerSource) -> IrClass? = { null }
+    val facadeClassGenerator: (DeserializedContainerSource) -> IrClass? = { null },
+    val mangler: KotlinMangler? = null
 ) {
     interface PostprocessingStep {
         fun postprocess(context: GeneratorContext, irElement: IrElement)
@@ -58,13 +56,19 @@ class Psi2IrTranslator(
         generatorExtensions: GeneratorExtensions
     ): IrModuleFragment {
         val context = createGeneratorContext(moduleDescriptor, bindingContext, extensions = generatorExtensions)
-        return generateModuleFragment(context, ktFiles)
+        return generateModuleFragment(
+            context, ktFiles,
+            irProviders = generateTypicalIrProviderList(
+                moduleDescriptor, context.irBuiltIns, context.symbolTable,
+                externalDeclarationOrigin = context.extensions.externalDeclarationOrigin
+            )
+        )
     }
 
     fun createGeneratorContext(
         moduleDescriptor: ModuleDescriptor,
         bindingContext: BindingContext,
-        symbolTable: SymbolTable = SymbolTable(),
+        symbolTable: SymbolTable = SymbolTable(mangler),
         extensions: GeneratorExtensions = GeneratorExtensions()
     ): GeneratorContext =
         GeneratorContext(configuration, moduleDescriptor, bindingContext, languageVersionSettings, symbolTable, extensions)
@@ -73,17 +77,25 @@ class Psi2IrTranslator(
         context: GeneratorContext,
         ktFiles: Collection<KtFile>,
         deserializer: IrDeserializer? = null,
-        irProviders: List<IrProvider> = emptyList()
+        irProviders: List<IrProvider>? = null
     ): IrModuleFragment {
         val moduleGenerator = ModuleGenerator(context)
         val irModule = moduleGenerator.generateModuleFragmentWithoutDependencies(ktFiles)
 
+        val realIrProviders = irProviders ?: generateTypicalIrProviderList(
+            irModule.descriptor, context.irBuiltIns, context.symbolTable, deserializer,
+            context.extensions.externalDeclarationOrigin,
+            facadeClassGenerator
+        )
+
         // This is required for implicit casts insertion on IrTypes (work-in-progress).
-        moduleGenerator.generateUnboundSymbolsAsDependencies(irModule, deserializer, irProviders, facadeClassGenerator)
+        moduleGenerator.generateUnboundSymbolsAsDependencies(realIrProviders)
         irModule.patchDeclarationParents()
 
         postprocess(context, irModule)
-        moduleGenerator.generateUnboundSymbolsAsDependencies(irModule, deserializer, irProviders, facadeClassGenerator)
+        irModule.computeUniqIdForDeclarations(context.symbolTable)
+
+        moduleGenerator.generateUnboundSymbolsAsDependencies(realIrProviders)
         return irModule
     }
 

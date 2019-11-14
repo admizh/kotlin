@@ -195,7 +195,7 @@ private fun runAnalysisAndPreparePsi2Ir(depsDescriptors: ModulesStructure): Gene
 }
 
 fun GeneratorContext.generateModuleFragment(files: List<KtFile>, deserializer: IrDeserializer? = null) =
-    Psi2IrTranslator(languageVersionSettings, configuration).generateModuleFragment(this, files, deserializer)
+    Psi2IrTranslator(languageVersionSettings, configuration, mangler = JsMangler).generateModuleFragment(this, files, deserializer)
 
 
 private fun createBuiltIns(storageManager: StorageManager) = object : KotlinBuiltIns(storageManager) {}
