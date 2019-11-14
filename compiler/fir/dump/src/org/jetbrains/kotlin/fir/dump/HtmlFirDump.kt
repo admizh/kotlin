@@ -980,7 +980,7 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
         symbolRef(symbol) {
             +symbol.callableId.toString()
         }
-        + ":"
+        +":"
         generate(fir.returnTypeRef)
     }
 
@@ -1089,7 +1089,7 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
                     }
                 }
             }
-            else -> Unit
+            else -> +diagnostic.reason
         }
     }
 
