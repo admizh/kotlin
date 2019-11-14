@@ -238,7 +238,7 @@ private fun JavaClassifierType.enhanceInflexibleType(
     val effectiveQualifiers = qualifiers(index)
     val enhancedTag = originalTag.enhanceMutability(effectiveQualifiers, position)
 
-    val enhancedArguments = if (isRaw && false) {
+    val enhancedArguments = if (isRaw) {
         val firClassifier = originalTag.toSymbol(session)!!.firUnsafe<FirRegularClass>()
         firClassifier.typeParameters.map {
             val fir = it
