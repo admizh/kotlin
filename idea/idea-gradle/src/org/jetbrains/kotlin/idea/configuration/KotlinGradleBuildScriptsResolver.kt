@@ -13,7 +13,7 @@ import com.intellij.util.Consumer
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.*
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.plugins.gradle.model.ProjectImportExtraModelProvider
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 class KotlinGradleBuildScriptsResolver : AbstractProjectResolverExtension() {
@@ -36,7 +36,7 @@ class KotlinGradleBuildScriptsResolver : AbstractProjectResolverExtension() {
         }
     }
 
-    override fun getExtraModelProvider(): ProjectImportExtraModelProvider {
+    override fun getModelProvider(): ProjectImportModelProvider {
         return KotlinDslScriptModelProvider()
     }
 

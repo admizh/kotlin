@@ -11,20 +11,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.LightPlatformTestCase
 
 // BUNCH: 192
 @Suppress("DEPRECATION")
 @Deprecated("Use KotlinLightCodeInsightFixtureTestCase instead")
 abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightCodeInsightTestCase() {
-    protected inline val project_: Project get() = LightPlatformTestCase.getProject()
-    protected inline val module_: Module get() = LightPlatformTestCase.getModule()
-    protected inline val editor_: Editor get() = LightPlatformCodeInsightTestCase.getEditor()
+    protected inline val project_: Project get() = project
+    protected inline val module_: Module get() = module
+    protected inline val editor_: Editor get() = editor
 }
 
 // BUNCH: 192
 abstract class KotlinLightIdeaTestCase : LightIdeaTestCase() {
-    protected inline val project_: Project get() = LightPlatformTestCase.getProject()
-    protected inline val module_: Module get() = LightPlatformTestCase.getModule()
+    protected inline val project_: Project get() = project
+    protected inline val module_: Module get() = module
 }
