@@ -46,6 +46,7 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
         val signaturesVisibleThroughKotlinSuperClass = kotlinSuperClass?.visibleSignatures ?: emptyList()
         return signaturesFromKotlinInterfaces.firstOrNull {
             it !in signaturesVisibleThroughKotlinSuperClass &&
+                    !it.method.modifierList.hasModifierProperty(PsiModifier.DEFAULT) &&
                     it.method.modifierList.annotations.none { annotation ->
                         val qualifiedName = annotation.qualifiedName
                         qualifiedName == JVM_DEFAULT_FQ_NAME.asString() || qualifiedName == JVM_STATIC_ANNOTATION_FQ_NAME.asString()
