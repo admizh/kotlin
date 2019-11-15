@@ -6,6 +6,7 @@
 package kotlinx.metadata.klib.impl
 
 import kotlinx.metadata.impl.WriteContext
+import kotlinx.metadata.impl.writeAnnotation
 import kotlinx.metadata.klib.KlibHeader
 import kotlinx.metadata.klib.KlibSourceFile
 import kotlinx.metadata.klib.UniqId
@@ -20,10 +21,13 @@ internal fun UniqId.writeUniqId(): KlibMetadataProtoBuf.DescriptorUniqId.Builder
 internal fun KlibHeader.writeHeader(context: WriteContext): KlibMetadataProtoBuf.Header.Builder =
     KlibMetadataProtoBuf.Header.newBuilder().also { proto ->
         val (strings, qualifiedNames) = (context.strings as StringTableImpl).buildProto()
+        proto.moduleName = moduleName
         proto.qualifiedNames = qualifiedNames
         proto.strings = strings
         proto.addAllPackageFragmentName(packageFragmentName)
         proto.addAllFile(file.map { it.writeFile().build() })
+        proto.addAllAnnotation(annotation.map { it.writeAnnotation(context.strings).build() })
+        proto.addAllEmptyPackage(emptyPackage)
     }
 
 internal fun KlibSourceFile.writeFile(): KlibMetadataProtoBuf.File.Builder =

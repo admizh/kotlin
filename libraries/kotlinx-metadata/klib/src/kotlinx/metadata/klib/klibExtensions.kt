@@ -89,12 +89,6 @@ var KmModuleFragment.fqName: String?
         klibExtensions.fqName = value
     }
 
-var KmModuleFragment.isEmpty: Boolean?
-    get() = klibExtensions.isEmpty
-    set(value) {
-        klibExtensions.isEmpty = value
-    }
-
 val KmModuleFragment.className: MutableList<ClassName>?
     get() = klibExtensions.className
 

@@ -5,18 +5,23 @@
 
 package kotlinx.metadata.klib.impl
 
+import kotlinx.metadata.impl.readAnnotation
 import kotlinx.metadata.klib.KlibHeader
 import kotlinx.metadata.klib.KlibSourceFile
 import kotlinx.metadata.klib.UniqId
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
+import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 
 internal fun KlibMetadataProtoBuf.DescriptorUniqId.readUniqId(): UniqId =
     UniqId(index)
 
-internal fun KlibMetadataProtoBuf.Header.readHeader(): KlibHeader =
+internal fun KlibMetadataProtoBuf.Header.readHeader(strings: NameResolver): KlibHeader =
     KlibHeader(
+        moduleName,
         fileList.map(KlibMetadataProtoBuf.File::readFile),
-        packageFragmentNameList
+        packageFragmentNameList,
+        emptyPackageList,
+        annotationList.map { it.readAnnotation(strings) }
     )
 
 internal fun KlibMetadataProtoBuf.File.readFile(): KlibSourceFile =

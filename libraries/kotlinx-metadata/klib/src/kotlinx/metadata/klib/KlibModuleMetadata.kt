@@ -5,6 +5,7 @@
 
 package kotlinx.metadata.klib
 
+import kotlinx.metadata.KmAnnotation
 import kotlinx.metadata.KmModuleFragment
 import kotlinx.metadata.impl.WriteContext
 import kotlinx.metadata.impl.accept
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.NameResolverImpl
 
 /**
- * Allows to modify the way fragments of the single package are read by [KlibMetadata.read].
+ * Allows to modify the way fragments of the single package are read by [KlibModuleMetadata.read].
  * For example, it may be convenient to join fragments into a single one.
  */
 interface KlibModuleFragmentReadStrategy {
@@ -31,7 +32,7 @@ interface KlibModuleFragmentReadStrategy {
 }
 
 /**
- * Allows to modify the way module fragments are written by [KlibMetadata.write].
+ * Allows to modify the way module fragments are written by [KlibModuleMetadata.write].
  * For example, splitting big fragments into several small one allows to improve IDE performance.
  */
 interface KlibModuleFragmentWriteStrategy {
@@ -48,7 +49,11 @@ interface KlibModuleFragmentWriteStrategy {
 /**
  * Represents the parsed metadata of KLIB.
  */
-class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
+class KlibModuleMetadata(
+    val name: String,
+    val fragments: List<KmModuleFragment>,
+    val annotations: List<KmAnnotation>
+) {
 
     /**
      * Serialized representation of module metadata.
@@ -76,10 +81,10 @@ class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
         fun read(
             library: MetadataLibraryProvider,
             readStrategy: KlibModuleFragmentReadStrategy = KlibModuleFragmentReadStrategy.DEFAULT
-        ): KlibMetadata {
+        ): KlibModuleMetadata {
             val moduleHeaderProto = parseModuleHeader(library.moduleHeaderData)
-            val moduleHeader = moduleHeaderProto.readHeader()
             val nameResolver = NameResolverImpl(moduleHeaderProto.strings, moduleHeaderProto.qualifiedNames)
+            val moduleHeader = moduleHeaderProto.readHeader(nameResolver)
             val fileIndex = SourceFileIndexReadExtension(moduleHeader.file)
             val moduleFragments = moduleHeader.packageFragmentName.flatMap { packageFqName ->
                 library.packageMetadataParts(packageFqName).map { part ->
@@ -87,7 +92,7 @@ class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
                     KmModuleFragment().apply { packageFragment.accept(this, nameResolver, listOf(fileIndex)) }
                 }.let(readStrategy::processModuleParts)
             }
-            return KlibMetadata(moduleFragments)
+            return KlibModuleMetadata(moduleHeader.moduleName, moduleFragments, moduleHeader.annotation)
         }
     }
 
@@ -101,22 +106,32 @@ class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
         val reverseIndex = ReverseSourceFileIndexWriteExtension()
         val c = WriteContext(KlibMetadataStringTable(), listOf(reverseIndex))
 
-        val groupedModuleFragmentsProtos = moduleFragments
-            .groupBy({ it.fqNameOrFail() }, { it })
+        val groupedFragments = fragments
+            .groupBy(KmModuleFragment::fqNameOrFail)
             .mapValues { writeStrategy.processPackageParts(it.value) }
-            .mapValues { (_, fragments) ->
-                fragments.map {
-                    KlibModuleFragmentWriter(c.strings as KlibMetadataStringTable, c.contextExtensions).also(it::accept).write()
-                }
+
+        val header = KlibHeader(
+            name,
+            reverseIndex.fileIndex,
+            groupedFragments.map { it.key },
+            groupedFragments.filter { it.value.all(KmModuleFragment::isEmpty) }.map { it.key },
+            annotations
+        )
+        val groupedProtos = groupedFragments.mapValues { (_, fragments) ->
+            fragments.map {
+                KlibModuleFragmentWriter(c.strings as KlibMetadataStringTable, c.contextExtensions).also(it::accept).write()
             }
-        val header = KlibHeader(reverseIndex.fileIndex, groupedModuleFragmentsProtos.map { it.key })
+        }
         return SerializedKlibMetadata(
             header.writeHeader(c).build().toByteArray(),
-            groupedModuleFragmentsProtos.map { it.value.map(ProtoBuf.PackageFragment::toByteArray) },
+            groupedProtos.map { it.value.map(ProtoBuf.PackageFragment::toByteArray) },
             header.packageFragmentName
         )
     }
-
-    private fun KmModuleFragment.fqNameOrFail(): String =
-        fqName ?: error("Module fragment must have a fully-qualified name.")
 }
+
+private fun KmModuleFragment.fqNameOrFail(): String =
+    fqName ?: error("Module fragment must have a fully-qualified name.")
+
+private fun KmModuleFragment.isEmpty(): Boolean =
+    classes.isEmpty() && (pkg?.let { it.functions.isEmpty() && it.properties.isEmpty() && it.typeAliases.isEmpty() } ?: true)

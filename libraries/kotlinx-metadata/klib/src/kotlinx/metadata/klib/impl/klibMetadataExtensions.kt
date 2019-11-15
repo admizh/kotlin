@@ -54,7 +54,6 @@ internal class KlibMetadataExtensions : MetadataExtensions {
         proto.getExtension(KlibMetadataProtoBuf.packageFragmentFiles)
             .map { c.getSourceFile(it) }
             .forEach(extension::visitFile)
-        proto.getExtensionOrNull(KlibMetadataProtoBuf.isEmpty)?.let(extension::visitIsEmpty)
         proto.getExtensionOrNull(KlibMetadataProtoBuf.fqName)?.let(extension::visitFqName)
         proto.getExtension(KlibMetadataProtoBuf.className)
             .map(c.strings::getQualifiedClassName)
@@ -175,10 +174,6 @@ internal class KlibMetadataExtensions : MetadataExtensions {
             override fun visitFile(file: KlibSourceFile) {
                 val fileIdx = c.getIndexOf(file)
                 proto.addExtension(KlibMetadataProtoBuf.packageFragmentFiles, fileIdx)
-            }
-
-            override fun visitIsEmpty(isEmpty: Boolean) {
-                proto.setExtension(KlibMetadataProtoBuf.isEmpty, isEmpty)
             }
 
             override fun visitFqName(fqName: String) {

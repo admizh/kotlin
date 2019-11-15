@@ -117,8 +117,6 @@ abstract class KlibModuleFragmentExtensionVisitor : KmModuleFragmentExtensionVis
 
     abstract fun visitFile(file: KlibSourceFile)
 
-    abstract fun visitIsEmpty(isEmpty: Boolean)
-
     abstract fun visitFqName(fqName: String)
 
     abstract fun visitClassName(className: ClassName)

@@ -8,6 +8,7 @@ package kotlinx.metadata.klib.impl
 import kotlinx.metadata.impl.*
 import kotlinx.metadata.klib.KlibSourceFile
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataStringTable
+import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.metadata.ProtoBuf
 
 class ReverseSourceFileIndexWriteExtension : WriteContextExtension {
@@ -31,4 +32,14 @@ class KlibModuleFragmentWriter(
 
     fun write(): ProtoBuf.PackageFragment =
         t.build()
+
+    override fun visitEnd() {
+        val isPackageEmpty = if (t.`package` == null) {
+            true
+        } else {
+            t.`package`.let { it.functionCount == 0 && it.propertyCount == 0 && it.typeAliasCount == 0 }
+        }
+        val isEmpty = t.class_Count == 0 && isPackageEmpty
+        t.setExtension(KlibMetadataProtoBuf.isEmpty, isEmpty)
+    }
 }

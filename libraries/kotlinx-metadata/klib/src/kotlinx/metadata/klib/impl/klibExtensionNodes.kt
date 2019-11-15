@@ -200,16 +200,11 @@ internal class KlibPackageExtension : KlibPackageExtensionVisitor(), KmPackageEx
 internal class KlibModuleFragmentExtension : KlibModuleFragmentExtensionVisitor(), KmModuleFragmentExtension {
 
     val moduleFragmentFiles: MutableList<KlibSourceFile> = ArrayList()
-    var isEmpty: Boolean? = null
     var fqName: String? = null
     val className: MutableList<ClassName> = ArrayList()
 
     override fun visitFile(file: KlibSourceFile) {
         moduleFragmentFiles += file
-    }
-
-    override fun visitIsEmpty(isEmpty: Boolean) {
-        this.isEmpty = isEmpty
     }
 
     override fun visitFqName(fqName: String) {
@@ -223,7 +218,6 @@ internal class KlibModuleFragmentExtension : KlibModuleFragmentExtensionVisitor(
     override fun accept(visitor: KmModuleFragmentExtensionVisitor) {
         require(visitor is KlibModuleFragmentExtensionVisitor)
         moduleFragmentFiles.forEach(visitor::visitFile)
-        isEmpty?.let(visitor::visitIsEmpty)
         fqName?.let(visitor::visitFqName)
         className.forEach(visitor::visitClassName)
     }
