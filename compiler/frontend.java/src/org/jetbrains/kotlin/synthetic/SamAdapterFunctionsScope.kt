@@ -17,8 +17,6 @@
 package org.jetbrains.kotlin.synthetic
 
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
@@ -32,7 +30,6 @@ import org.jetbrains.kotlin.load.java.components.SamConversionResolver
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
-import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaClassDescriptor
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
 import org.jetbrains.kotlin.load.java.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.load.java.sam.SingleAbstractMethodUtils
@@ -72,7 +69,7 @@ class SamAdapterFunctionsScope(
             }
 
     private val samConstructorForClassifier =
-            storageManager.createMemoizedFunction<JavaClassDescriptor, SamConstructorDescriptor> { classifier ->
+            storageManager.createMemoizedFunction<ClassDescriptor, SamConstructorDescriptor> { classifier ->
                 SingleAbstractMethodUtils.createSamConstructorFunction(classifier.containingDeclaration, classifier, samResolver)
             }
 
@@ -242,13 +239,15 @@ class SamAdapterFunctionsScope(
             return getTypeAliasSamConstructor(classifier)
         }
 
-        if (classifier !is LazyJavaClassDescriptor || classifier.defaultFunctionTypeForSamInterface == null) return null
+        if (classifier !is ClassDescriptor) return null
+        if (!SingleAbstractMethodUtils.isSamClassDescriptor(classifier)) return null
+
         return samConstructorForClassifier(classifier)
     }
 
     private fun getTypeAliasSamConstructor(classifier: TypeAliasDescriptor): SamConstructorDescriptor? {
         val classDescriptor = classifier.classDescriptor ?: return null
-        if (classDescriptor !is LazyJavaClassDescriptor || classDescriptor.defaultFunctionTypeForSamInterface == null) return null
+        if (!SingleAbstractMethodUtils.isSamClassDescriptor(classDescriptor)) return null
 
         return SingleAbstractMethodUtils.createTypeAliasSamConstructorFunction(
                 classifier, samConstructorForClassifier(classDescriptor), samResolver)
