@@ -51,6 +51,7 @@ tasks {
             "nodejs.ts",
             "karma.ts",
             "karma-kotlin-reporter.js",
+            "karma-debug.js",
             "mocha-kotlin-reporter.js",
             "package.json",
             "rollup.config.js",
