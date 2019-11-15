@@ -10,8 +10,6 @@ import kotlinx.metadata.impl.WriteContext
 import kotlinx.metadata.impl.accept
 import kotlinx.metadata.klib.impl.*
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataStringTable
-import org.jetbrains.kotlin.library.MetadataLibrary
-import org.jetbrains.kotlin.library.SerializedMetadata
 import org.jetbrains.kotlin.library.metadata.parseModuleHeader
 import org.jetbrains.kotlin.library.metadata.parsePackageFragment
 import org.jetbrains.kotlin.metadata.ProtoBuf
@@ -52,14 +50,31 @@ interface KlibModuleFragmentWriteStrategy {
  */
 class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
 
+    /**
+     * Serialized representation of module metadata.
+     */
+    class SerializedKlibMetadata(
+        val header: ByteArray,
+        val fragments: List<List<ByteArray>>,
+        val fragmentNames: List<String>
+    )
+
+    /**
+     * Specifies access to library's metadata.
+     */
+    interface MetadataLibraryProvider {
+        val moduleHeaderData: ByteArray
+        fun packageMetadataParts(fqName: String): Set<String>
+        fun packageMetadata(fqName: String, partName: String): ByteArray
+    }
+
     companion object {
         /**
          * Deserializes metadata from the given [library].
          * @param readStrategy specifies the way module fragments of a single package are modified (e.g. merged) after deserialization.
          */
-        // TODO: exposes MetadataLibrary which is internal!
         fun read(
-            library: MetadataLibrary,
+            library: MetadataLibraryProvider,
             readStrategy: KlibModuleFragmentReadStrategy = KlibModuleFragmentReadStrategy.DEFAULT
         ): KlibMetadata {
             val moduleHeaderProto = parseModuleHeader(library.moduleHeaderData)
@@ -80,10 +95,9 @@ class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
      * Writes metadata back to serialized representation.
      * @param writeStrategy specifies the way module fragments are modified (e.g. split) before serialization.
      */
-    // TODO: exposes SerializedMetadata which is internal!
     fun write(
         writeStrategy: KlibModuleFragmentWriteStrategy = KlibModuleFragmentWriteStrategy.DEFAULT
-    ): SerializedMetadata {
+    ): SerializedKlibMetadata {
         val reverseIndex = ReverseSourceFileIndexWriteExtension()
         val c = WriteContext(KlibMetadataStringTable(), listOf(reverseIndex))
 
@@ -96,7 +110,7 @@ class KlibMetadata(val moduleFragments: List<KmModuleFragment>) {
                 }
             }
         val header = KlibHeader(reverseIndex.fileIndex, groupedModuleFragmentsProtos.map { it.key })
-        return SerializedMetadata(
+        return SerializedKlibMetadata(
             header.writeHeader(c).build().toByteArray(),
             groupedModuleFragmentsProtos.map { it.value.map(ProtoBuf.PackageFragment::toByteArray) },
             header.packageFragmentName

@@ -10,7 +10,7 @@ plugins {
 group = "org.jetbrains.kotlinx"
 
 val deployVersion = findProperty("kotlinxMetadataKlibDeployVersion") as String?
-version = deployVersion ?: "0.1-SNAPSHOT"
+version = deployVersion ?: "0.0.1-SNAPSHOT"
 
 jvmTarget = "1.6"
 javaHome = rootProject.extra["JDK_16"] as String
@@ -30,10 +30,8 @@ dependencies {
     shadows(project(":kotlinx-metadata"))
     shadows(project(":core:metadata"))
     shadows(project(":compiler:serialization"))
-    // Looks like klib dependencies should be `compile` because otherwise
-    // it's impossible to use outer KLIB writing infrastructure in its current state.
-    compile(project(":kotlin-util-klib-metadata"))
-    compile(project(":kotlin-util-klib"))
+    shadows(project(":kotlin-util-klib-metadata"))
+    shadows(project(":kotlin-util-klib"))
     shadows(protobufLite())
 }
 
@@ -50,7 +48,7 @@ tasks.register<ShadowJar>("shadowJar") {
     from(mainSourceSet.output)
     exclude("**/*.proto")
     configurations = listOf(shadows)
-    relocate("org.jetbrains.kotlin.metadata", "kotlinx.metadata.internal")
+    relocate("org.jetbrains.kotlin", "kotlinx.metadata.internal")
 
     val artifactRef = outputs.files.singleFile
     runtimeJarArtifactBy(this, artifactRef)
